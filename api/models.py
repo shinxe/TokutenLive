@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum,Boolean
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -31,24 +31,26 @@ class SchoolClass(Base):
 
 #予選
 class LeagueMatch(Base):
+    """予選リーグの'対戦の組み合わせ'と'結果'を保存するテーブル"""
     __tablename__ = "league_matches"
     id = Column(Integer, primary_key=True, index=True)
     sport = Column(Enum(SportName))
     league = Column(Enum(LeagueName))
 
-    # 対戦クラス
     class1_id = Column(Integer, ForeignKey("classes.id"))
     class2_id = Column(Integer, ForeignKey("classes.id"))
 
-    # 得点 (バレー・バスケ・サッカー用)
-    class1_score = Column(Integer, default=0)
-    class2_score = Column(Integer, default=0)
-
-    # セットカウント（バドミントン・卓球）
-    class1_sets_won = Column(Integer, default=0)
-    class2_sets_won = Column(Integer, default=0)
-
+    # --- ここから修正 ---
+    # 試合結果は後から入力されるので、最初はNULLでも良い
+    class1_score = Column(Integer, nullable=True)
+    class2_score = Column(Integer, nullable=True)
+    class1_sets_won = Column(Integer, nullable=True)
+    class2_sets_won = Column(Integer, nullable=True)
     winner_id = Column(Integer, ForeignKey("classes.id"), nullable=True)
+    # --- ここまで修正 ---
+
+    # 試合が完了したかどうかのフラグ
+    is_finished = Column(Boolean, default=False)
 
     class1 = relationship("SchoolClass", foreign_keys=[class1_id])
     class2 = relationship("SchoolClass", foreign_keys=[class2_id])

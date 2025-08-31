@@ -50,14 +50,29 @@ def read_classes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
     return classes
 
 # === 予選リーグの試合結果管理 ===
-@app.post("/league_matches/", response_model=schemas.LeagueMatch, tags=["League Matches"])
-def create_league_match(match_data: schemas.LeagueMatchCreate, db: Session = Depends(get_db)):
-    """予選リーグの試合結果を登録する"""
-    db_match = models.LeagueMatch(**match_data.dict())
-    db.add(db_match)
+@app.get("/leagues/{sport}/{league}/matches/", response_model=List[schemas.LeagueMatch], tags=["League Matches"])
+def get_league_matches(sport: models.SportName, league: models.LeagueName, db: Session = Depends(get_db)):
+    """指定されたリーグの全対戦カードを取得する"""
+    matches = db.query(models.LeagueMatch).filter_by(sport=sport, league=league).all()
+    return matches
+
+@app.put("/leagues/matches/{match_id}/", response_model=schemas.LeagueMatch, tags=["League Matches"])
+def update_league_match(match_id: int, match_data: schemas.LeagueMatchUpdate, db: Session = Depends(get_db)):
+    """予選リーグの試合結果を更新する"""
+    match = db.query(models.LeagueMatch).filter(models.LeagueMatch.id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    match.class1_score = match_data.class1_score
+    match.class2_score = match_data.class2_score
+    match.class1_sets_won = match_data.class1_sets_won
+    match.class2_sets_won = match_data.class2_sets_won
+    match.winner_id = match_data.winner_id
+    match.is_finished = True # 試合を完了済みにする
+    
     db.commit()
-    db.refresh(db_match)
-    return db_match
+    db.refresh(match)
+    return match
 
 @app.get("/league_matches/", response_model=List[schemas.LeagueMatch], tags=["League Matches"])
 def read_league_matches(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

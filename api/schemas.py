@@ -79,3 +79,10 @@ class TotalRanking(BaseModel):
     total_points: int
     league_points_details: dict
     tournament_points_details: dict
+
+class LeagueMatchUpdate(BaseModel):
+    class1_score: int
+    class2_score: int
+    class1_sets_won: int
+    class2_sets_won: int
+    winner_id: int

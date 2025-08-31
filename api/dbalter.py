@@ -1,32 +1,54 @@
-from models import SessionLocal, SchoolClass
+# seed.py
 
-# 追加したいクラス名をリストとして定義
-class_names = [f"{grade}-{class_num}" for grade in range(1, 4) for class_num in range(1, 7)]
-# 生成されるリスト: ['1-1', '1-2', ..., '3-5', '3-6']
+from models import SessionLocal, SchoolClass, LeagueMatch, SportName, LeagueName, Base, engine
+from itertools import combinations # 組み合わせを生成するためのライブラリ
 
-# データベースセッションを開始
+print("データベースとテーブルを確認・作成します...")
+Base.metadata.create_all(bind=engine)
+
 db = SessionLocal()
 
-print("クラスの追加を開始します...")
-
 try:
-    # 各クラス名をデータベースに追加
+    # --- クラスの登録 ---
+    print("クラスを登録中...")
+    class_names = [f"{g}-{c}" for g in range(1, 4) for c in range(1, 7)]
     for name in class_names:
-        # 既に同じ名前のクラスが存在しないかチェック (任意)
-        exists = db.query(SchoolClass).filter(SchoolClass.name == name).first()
-        if not exists:
-            db_class = SchoolClass(name=name)
-            db.add(db_class)
-            print(f"  - {name} を追加")
-
-    # 変更をコミット（保存）
+        if not db.query(SchoolClass).filter(SchoolClass.name == name).first():
+            db.add(SchoolClass(name=name))
     db.commit()
-    print("正常にクラスが追加されました。")
+    print("クラス登録完了。")
 
-except Exception as e:
-    print(f"エラーが発生しました: {e}")
-    db.rollback() # エラーが発生した場合は変更を元に戻す
+    # --- ここからリーグの組み合わせを自動生成 ---
+    print("リーグの対戦表を生成中...")
+    if db.query(LeagueMatch).first():
+        print("既に対戦表が存在するため、スキップします。")
+    else:
+        all_classes = db.query(SchoolClass).all()
+        class_map = {cls.name: cls.id for cls in all_classes}
+        
+        # リーグごとの参加クラスを定義
+        league_teams = {
+            'A': [f"{g}-{c}" for g in [1,2,3] for c in [1,2]], # 例: 1-1, 1-2, 2-1, 2-2, 3-1, 3-2
+            'B': [f"{g}-{c}" for g in [1,2,3] for c in [3,4]],
+            'C': [f"{g}-{c}" for g in [1,2,3] for c in [5]],
+            'D': [f"{g}-{c}" for g in [1,2,3] for c in [6]],
+        }
+
+        for sport in SportName:
+            for league_name, teams in league_teams.items():
+                team_ids = [class_map[team_name] for team_name in teams]
+                # 総当たりの組み合わせを生成
+                for team1_id, team2_id in combinations(team_ids, 2):
+                    fixture = LeagueMatch(
+                        sport=sport,
+                        league=LeagueName[league_name],
+                        class1_id=team1_id,
+                        class2_id=team2_id,
+                        is_finished=False # 最初は未完了
+                    )
+                    db.add(fixture)
+        db.commit()
+        print("対戦表の生成完了。")
 
 finally:
-    # セッションを閉じる
     db.close()

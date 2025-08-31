@@ -71,7 +71,44 @@ const handleTournamentSubmit = async (match, winnerId) => {
     }
 };
 
-const isBallGame = computed(() => ballGames.includes(leagueForm.value.sport));
+const adminLeagueForm = ref({ sport: allSports[0], league: 'A' });
+const unfinishedMatches = ref([]);
+
+const isBallGame = (sport) => ['サッカー', 'バレー', 'バスケ'].includes(sport);
+
+const fetchLeagueMatches = async () => {
+    try {
+        const res = await api.getLeagueMatches(adminLeagueForm.value.sport, adminLeagueForm.value.league);
+        // 未完了の試合のみをフィルタリングし、スコア用のプロパティを追加
+        unfinishedMatches.value = res.data
+            .filter(m => !m.is_finished)
+            .map(m => ({ ...m, score1: 0, score2: 0, sets1: 0, sets2: 0, winner_id: null }));
+    } catch (err) {
+        alert('対戦データの取得に失敗しました。');
+    }
+};
+
+const submitLeagueResult = async (match) => {
+    if (!match.winner_id) {
+        alert('勝者を選択してください。');
+        return;
+    }
+    const payload = {
+        class1_score: match.score1,
+        class2_score: match.score2,
+        class1_sets_won: match.sets1,
+        class2_sets_won: match.sets2,
+        winner_id: match.winner_id,
+    };
+    try {
+        await api.updateLeagueMatch(match.id, payload);
+        alert('結果を保存しました。');
+        // 保存が成功したらリストから削除
+        unfinishedMatches.value = unfinishedMatches.value.filter(m => m.id !== match.id);
+    } catch (err) {
+        alert('結果の保存に失敗しました。');
+    }
+};
 </script>
 
 <template>
@@ -88,42 +125,31 @@ const isBallGame = computed(() => ballGames.includes(leagueForm.value.sport));
 
         <section class="card">
             <h3>2. 予選リーグ結果入力</h3>
-            <form @submit.prevent="handleLeagueSubmit">
-                <select v-model="leagueForm.sport">
+            <div class="form-group">
+                <select v-model="adminLeagueForm.sport">
                     <option v-for="s in allSports" :key="s" :value="s">{{ s }}</option>
                 </select>
-                <select v-model="leagueForm.league">
+                <select v-model="adminLeagueForm.league">
                     <option v-for="l in leagues" :key="l" :value="l">{{ l }}リーグ</option>
                 </select>
-                <select v-model="leagueForm.class1_id" required>
-                    <option :value="null">クラス1</option>
-                    <option v-for="c in allClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
-                vs
-                <select v-model="leagueForm.class2_id" required>
-                    <option :value="null">クラス2</option>
-                    <option v-for="c in allClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
+                <button @click="fetchLeagueMatches">このリーグの未完了の試合を表示</button>
+            </div>
 
-                <div v-if="isBallGame">
-                    スコア: <input type="number" v-model="leagueForm.class1_score" /> - <input type="number"
-                        v-model="leagueForm.class2_score" />
+            <div v-for="match in unfinishedMatches" :key="match.id" class="match-input-box">
+                <span>{{ match.class1.name }} vs {{ match.class2.name }}</span>
+                <div v-if="isBallGame(match.sport)">
+                    スコア: <input type="number" v-model="match.score1" /> - <input type="number" v-model="match.score2" />
                 </div>
                 <div v-else>
-                    セット数: <input type="number" v-model="leagueForm.class1_sets_won" /> - <input type="number"
-                        v-model="leagueForm.class2_sets_won" />
+                    セット: <input type="number" v-model="match.sets1" /> - <input type="number" v-model="match.sets2" />
                 </div>
-
-                <select v-model="leagueForm.winner_id" required>
-                    <option :value="null">勝者を選択</option>
-                    <option v-if="leagueForm.class1_id" :value="leagueForm.class1_id">{{allClasses.find(c => c.id ===
-                        leagueForm.class1_id)?.name }}</option>
-                    <option v-if="leagueForm.class2_id" :value="leagueForm.class2_id">{{allClasses.find(c => c.id ===
-                        leagueForm.class2_id)?.name }}</option>
+                <select v-model="match.winner_id">
+                    <option :value="null">勝者</option>
+                    <option :value="match.class1.id">{{ match.class1.name }}</option>
+                    <option :value="match.class2.id">{{ match.class2.name }}</option>
                 </select>
-
-                <button type="submit">予選結果を登録</button>
-            </form>
+                <button @click="submitLeagueResult(match)">結果を保存</button>
+            </div>
         </section>
 
         <section class="card">
@@ -145,6 +171,21 @@ const isBallGame = computed(() => ballGames.includes(leagueForm.value.sport));
 </template>
 
 <style scoped>
+.match-input-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 15px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.match-input-box input[type="number"] {
+    width: 50px;
+}
+
 .admin-panel {
     display: flex;
     flex-direction: column;
