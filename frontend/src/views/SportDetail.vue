@@ -1,6 +1,7 @@
 <script setup>
 import { defineProps } from 'vue';
 import LeagueStandings from '../components/LeagueStandings.vue';
+import LeagueTable from '../components/LeagueTable.vue'; // Import the new component
 import TournamentBracket from '../components/TournamentBracket.vue';
 
 const props = defineProps({
@@ -16,7 +17,10 @@ const leagues = ['A', 'B', 'C', 'D'];
         <div class="content-wrapper">
             <div class="leagues">
                 <h3>予選リーグ</h3>
-                <LeagueStandings v-for="league in leagues" :key="league" :sport="sportName" :league="league" />
+                <div v-for="league in leagues" :key="league" class="league-section">
+                    <LeagueTable :sport="sportName" :league="league" />
+                    <LeagueStandings :sport="sportName" :league="league" />
+                </div>
             </div>
             <div class="tournament">
                 <h3>決勝トーナメント</h3>
