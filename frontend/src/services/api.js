@@ -15,6 +15,9 @@ export default {
     getLeagueStandings(sport, league) {
         return apiClient.get(`/leagues/${sport}/${league}/standings/`);
     },
+    getLeagueMatches(sport, league) {
+        return apiClient.get(`/leagues/${sport}/${league}/matches/`);
+    },
     getTournament(sport) {
         return apiClient.get(`/tournaments/${sport}/`);
     },
