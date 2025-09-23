@@ -100,7 +100,9 @@ watch(() => props.sport, fetchTournament);
 
         <div class="round semifinals">
           <div class="match-item" v-for="match in semiFinals" :key="match.id" @click="handleMatchClick(match)">
-            <div class="match-name">{{ match.match_name }}</div>
+            <div class="match-name">
+              {{ (match.match_name.includes('E5') || match.match_name.includes('E6')) ? '準決勝' : match.match_name }}
+            </div>
             <MatchEditForm v-if="editingMatch && editingMatch.id === match.id" :match="editingMatch"
               :sport="props.sport" @save="handleSave" @cancel="handleCancel" />
             <div v-else class="match-content">
