@@ -83,15 +83,17 @@ watch(() => props.sport, fetchTournament);
     <div v-else-if="matches.length > 0" class="bracket-wrapper">
       <div class="bracket">
         <div v-if="isRacketSport" class="round first-round">
-           <div class="match-item" v-for="match in firstRound" :key="match.id" @click="handleMatchClick(match)">
+          <div class="match-item" v-for="match in firstRound" :key="match.id" @click="handleMatchClick(match)">
             <div class="match-name">{{ match.match_name }}</div>
             <MatchEditForm v-if="editingMatch && editingMatch.id === match.id" :match="editingMatch"
               :sport="props.sport" @save="handleSave" @cancel="handleCancel" />
             <div v-else class="match-content">
               <div class="team" :class="{ winner: match.winner?.id === match.class1?.id }"><span>{{ match.class1?.name
-                  || '未定' }}</span><span class="score">{{ isSetsBased ? match.class1_sets_won : match.class1_score ?? '' }}</span></div>
+                || '未定' }}</span><span class="score">{{ isSetsBased ? match.class1_sets_won : match.class1_score ?? ''
+                  }}</span></div>
               <div class="team" :class="{ winner: match.winner?.id === match.class2?.id }"><span>{{ match.class2?.name
-                  || '未定' }}</span><span class="score">{{ isSetsBased ? match.class2_sets_won : match.class2_score ?? '' }}</span></div>
+                || '未定' }}</span><span class="score">{{ isSetsBased ? match.class2_sets_won : match.class2_score ?? ''
+                  }}</span></div>
             </div>
           </div>
         </div>
@@ -103,9 +105,11 @@ watch(() => props.sport, fetchTournament);
               :sport="props.sport" @save="handleSave" @cancel="handleCancel" />
             <div v-else class="match-content">
               <div class="team" :class="{ winner: match.winner?.id === match.class1?.id }"><span>{{ match.class1?.name
-                  || '未定' }}</span><span class="score">{{ isSetsBased ? match.class1_sets_won : match.class1_score ?? '' }}</span></div>
+                || '未定' }}</span><span class="score">{{ isSetsBased ? match.class1_sets_won : match.class1_score ?? ''
+                  }}</span></div>
               <div class="team" :class="{ winner: match.winner?.id === match.class2?.id }"><span>{{ match.class2?.name
-                  || '未定' }}</span><span class="score">{{ isSetsBased ? match.class2_sets_won : match.class2_score ?? '' }}</span></div>
+                || '未定' }}</span><span class="score">{{ isSetsBased ? match.class2_sets_won : match.class2_score ?? ''
+                  }}</span></div>
             </div>
           </div>
         </div>
@@ -117,9 +121,11 @@ watch(() => props.sport, fetchTournament);
               :sport="props.sport" @save="handleSave" @cancel="handleCancel" />
             <div v-else class="match-content">
               <div class="team" :class="{ winner: final.winner?.id === final.class1?.id }"><span>{{ final.class1?.name
-                  || '未定' }}</span><span class="score">{{ isSetsBased ? final.class1_sets_won : final.class1_score ?? '' }}</span></div>
+                || '未定' }}</span><span class="score">{{ isSetsBased ? final.class1_sets_won : final.class1_score ?? ''
+                  }}</span></div>
               <div class="team" :class="{ winner: final.winner?.id === final.class2?.id }"><span>{{ final.class2?.name
-                  || '未定' }}</span><span class="score">{{ isSetsBased ? final.class2_sets_won : final.class2_score ?? '' }}</span></div>
+                || '未定' }}</span><span class="score">{{ isSetsBased ? final.class2_sets_won : final.class2_score ?? ''
+                  }}</span></div>
             </div>
           </div>
         </div>
@@ -139,10 +145,12 @@ watch(() => props.sport, fetchTournament);
             :sport="props.sport" @save="handleSave" @cancel="handleCancel" />
           <div v-else class="match-content">
             <div class="team" :class="{ winner: thirdPlace.winner?.id === thirdPlace.class1?.id }"><span>{{
-              thirdPlace.class1?.name || '未定' }}</span><span class="score">{{ isSetsBased ? thirdPlace.class1_sets_won : thirdPlace.class1_score ?? '' }}</span>
+              thirdPlace.class1?.name || '未定' }}</span><span class="score">{{ isSetsBased ? thirdPlace.class1_sets_won
+                  : thirdPlace.class1_score ?? '' }}</span>
             </div>
             <div class="team" :class="{ winner: thirdPlace.winner?.id === thirdPlace.class2?.id }"><span>{{
-              thirdPlace.class2?.name || '未定' }}</span><span class="score">{{ isSetsBased ? thirdPlace.class2_sets_won : thirdPlace.class2_score ?? '' }}</span>
+              thirdPlace.class2?.name || '未定' }}</span><span class="score">{{ isSetsBased ? thirdPlace.class2_sets_won
+                  : thirdPlace.class2_score ?? '' }}</span>
             </div>
           </div>
         </div>
@@ -280,6 +288,7 @@ watch(() => props.sport, fetchTournament);
   border-right: 2px solid #c7d2fe;
   border-top-right-radius: 5px;
 }
+
 .first-round .match-item:nth-child(even)::after {
   height: calc(50% + 2.25rem);
   top: 50%;
@@ -289,29 +298,30 @@ watch(() => props.sport, fetchTournament);
 }
 
 .semifinals .match-item:nth-child(odd)::before {
-    height: calc(100% + 2.5rem);
-    top: -2.5rem;
-    border-top: 2px solid #c7d2fe;
-    border-left: 2px solid #c7d2fe;
-    border-top-left-radius: 5px;
+  height: calc(100% + 2.5rem);
+  top: -2.5rem;
+  border-top: 2px solid #c7d2fe;
+  border-left: 2px solid #c7d2fe;
+  border-top-left-radius: 5px;
 }
+
 .semifinals .match-item:nth-child(even)::before {
-    height: calc(100% + 2.5rem);
-    bottom: -2.5rem;
-    top: auto;
-    border-bottom: 2px solid #c7d2fe;
-    border-left: 2px solid #c7d2fe;
-    border-bottom-left-radius: 5px;
+  height: calc(100% + 2.5rem);
+  bottom: -2.5rem;
+  top: auto;
+  border-bottom: 2px solid #c7d2fe;
+  border-left: 2px solid #c7d2fe;
+  border-bottom-left-radius: 5px;
 }
 
 .finals .match-item::before {
-    height: calc(100% + 10.5rem);
-    top: -5.25rem;
-    border-top: 2px solid #c7d2fe;
-    border-bottom: 2px solid #c7d2fe;
-    border-left: 2px solid #c7d2fe;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
+  height: calc(100% + 10.5rem);
+  top: -5.25rem;
+  border-top: 2px solid #c7d2fe;
+  border-bottom: 2px solid #c7d2fe;
+  border-left: 2px solid #c7d2fe;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
 }
 
 
@@ -349,11 +359,13 @@ watch(() => props.sport, fetchTournament);
     gap: 1rem;
   }
 
-  .semifinals, .first-round {
+  .semifinals,
+  .first-round {
     gap: 2rem;
   }
 
-  .match-item::after, .match-item::before {
+  .match-item::after,
+  .match-item::before {
     display: none;
   }
 
@@ -363,18 +375,22 @@ watch(() => props.sport, fetchTournament);
     text-align: center;
     margin: 0.5rem 0;
   }
+
   .first-round::before {
     content: '1回戦';
     font-weight: bold;
   }
+
   .semifinals::before {
     content: '準決勝';
     font-weight: bold;
   }
+
   .finals::before {
     content: '決勝';
     font-weight: bold;
   }
+
   .round:first-child::before {
     display: none;
   }
