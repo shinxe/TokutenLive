@@ -1,22 +1,49 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'http://127.0.0.1:8000',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
+// リクエストインターセプターを追加
+apiClient.interceptors.request.use(config => {
+    // sessionStorageからトークンを取得
+    const token = sessionStorage.getItem('authToken');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, error => {
+    return Promise.reject(error);
+});
+
+
 export default {
     // --- Read APIs ---
-    getTotalRankings() {
-        return apiClient.get('/rankings/total/');
+    // 総合ランキングを取得
+    getTotalRankings(params = {}) {
+        return apiClient.get('/rankings/total/', { params });
+    },
+
+    // 全てのリーグデータを削除
+    deleteAllLeagueData() {
+        return apiClient.delete('/all-leagues');
+    },
+
+    // 試合結果のみを全て削除
+    deleteAllScores() {
+        return apiClient.delete('/scores/all');
     },
     getLeagueStandings(sport, league) {
         return apiClient.get(`/leagues/${sport}/${league}/standings/`);
     },
     getLeagueMatches(sport, league) {
         return apiClient.get(`/leagues/${sport}/${league}/matches/`);
+    },
+    getLeagueTeams(sport, league) {
+        return apiClient.get(`/leagues/${sport}/${league}/teams/`);
     },
     getTournament(sport) {
         return apiClient.get(`/tournaments/${sport}/`);
@@ -26,13 +53,31 @@ export default {
     },
 
     // --- Writing ---
+    createClass(className) { // 新しくクラス作成APIを追加
+        return apiClient.post('/classes/', { name: className });
+    },
     createLeagueMatch(matchData) {
         return apiClient.post('/league_matches/', matchData);
     },
     generateTournament(sport) {
         return apiClient.post(`/tournaments/${sport}/generate/`);
     },
-    updateTournamentMatch(sport, matchId, winnerId) {
-        return apiClient.put(`/tournaments/${sport}/matches/${matchId}/`, { winner_id: winnerId });
+    updateTournamentMatch(sport, matchId, matchData) {
+        return apiClient.put(`/tournaments/${sport}/matches/${matchId}/`, matchData);
+    },
+    updateLeagueMatch(matchId, matchData) {
+        return apiClient.put(`/leagues/matches/${matchId}/`, matchData);
+    },
+    deleteLeagueMatches(sport, league) {
+        return apiClient.delete(`/leagues/${sport}/${league}/matches/`);
+    },
+    removeTeamFromLeague(teamData) { // teamData = { sport, league, class_id }
+        return apiClient.delete(`/leagues/teams/`, { data: teamData });
+    },
+    addTeamToLeague(teamData) { // teamData = { sport, league, class_id }
+        return apiClient.post(`/leagues/teams/`, teamData);
+    },
+    generateLeagueMatches(sport, league) {
+        return apiClient.post(`/leagues/${sport}/${league}/generate_matches/`);
     },
 };

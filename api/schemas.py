@@ -14,6 +14,30 @@ class SchoolClass(SchoolClassBase):
     class Config:
         orm_mode = True
 
+
+# --- リーグ所属チーム ---
+class LeagueTeamBase(BaseModel):
+    sport: SportName
+    league: LeagueName
+    class_id: int
+
+class LeagueTeamCreate(LeagueTeamBase):
+    pass
+
+class LeagueTeam(LeagueTeamBase):
+    id: int
+    school_class: SchoolClass
+
+    class Config:
+        orm_mode = True
+
+
+class LeagueTeamDelete(BaseModel):
+    sport: SportName
+    league: LeagueName
+    class_id: int
+
+
 # --- 予選リーグの試合結果 ---
 class LeagueMatchBase(BaseModel):
     sport: SportName
@@ -24,16 +48,17 @@ class LeagueMatchBase(BaseModel):
     class2_score: Optional[int] = 0
     class1_sets_won: Optional[int] = 0
     class2_sets_won: Optional[int] = 0
-    winner_id: int
+    winner_id: Optional[int] = None
 
 class LeagueMatchCreate(LeagueMatchBase):
     pass
 
 class LeagueMatch(LeagueMatchBase):
     id: int
+    is_finished: bool
     class1: SchoolClass
     class2: SchoolClass
-    winner: SchoolClass
+    winner: Optional[SchoolClass] = None
 
     class Config:
         orm_mode = True
@@ -65,12 +90,21 @@ class TournamentMatch(TournamentMatchBase):
     class1: Optional[SchoolClass] = None
     class2: Optional[SchoolClass] = None
     winner: Optional[SchoolClass] = None
+    class1_score: Optional[int] = None
+    class2_score: Optional[int] = None
+    class1_sets_won: Optional[int] = None
+    class2_sets_won: Optional[int] = None
+    is_finished: bool
 
     class Config:
         orm_mode = True
 
 class TournamentMatchUpdate(BaseModel):
     winner_id: int
+    class1_score: Optional[int] = None
+    class2_score: Optional[int] = None
+    class1_sets_won: Optional[int] = None
+    class2_sets_won: Optional[int] = None
 
 class TotalRanking(BaseModel):
     rank: int

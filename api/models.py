@@ -29,6 +29,16 @@ class SchoolClass(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
 
+
+class LeagueTeam(Base):
+    __tablename__ = "league_teams"
+    id = Column(Integer, primary_key=True, index=True)
+    sport = Column(Enum(SportName), nullable=False)
+    league = Column(Enum(LeagueName), nullable=False)
+    class_id = Column(Integer, ForeignKey("classes.id"), nullable=False)
+
+    school_class = relationship("SchoolClass")
+
 #予選
 class LeagueMatch(Base):
     """予選リーグの'対戦の組み合わせ'と'結果'を保存するテーブル"""
@@ -67,8 +77,18 @@ class TournamentMatch(Base):
     class1_id = Column(Integer, ForeignKey("classes.id"), nullable=True)
     class2_id = Column(Integer, ForeignKey("classes.id"), nullable=True)
 
+    # --- ここから追加 ---
+    class1_score = Column(Integer, nullable=True)
+    class2_score = Column(Integer, nullable=True)
+    class1_sets_won = Column(Integer, nullable=True)
+    class2_sets_won = Column(Integer, nullable=True)
+    # --- ここまで追加 ---
+
     # どのクラスが勝ったか
     winner_id = Column(Integer, ForeignKey("classes.id"), nullable=True)
+
+    # 試合が完了したかどうかのフラグ
+    is_finished = Column(Boolean, default=False)
     
     class1 = relationship("SchoolClass", foreign_keys=[class1_id])
     class2 = relationship("SchoolClass", foreign_keys=[class2_id])
