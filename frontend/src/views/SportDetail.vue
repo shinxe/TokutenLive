@@ -1,11 +1,18 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { defineProps } from 'vue';
 import LeagueTable from '../components/LeagueTable.vue';
 import TournamentBracket from '../components/TournamentBracket.vue';
 
 const props = defineProps({
     sportName: String, // URLから渡される
+});
+
+const processedSportName = computed(() => {
+    if (props.sportName === 'バスケ') {
+        return '女バス';
+    }
+    return props.sportName;
 });
 
 const leagues = ['A', 'B', 'C', 'D'];
@@ -36,7 +43,7 @@ const toggleTournament = () => {
                 </div>
                 <div v-if="isLeaguesVisible"> <!-- Wrap content with v-if -->
                     <div v-for="league in leagues" :key="league" class="league-section">
-                        <LeagueTable :sport="sportName" :league="league" />
+                        <LeagueTable :sport="processedSportName" :league="league" />
                     </div>
                 </div>
             </section>
@@ -47,7 +54,7 @@ const toggleTournament = () => {
                         {{ isTournamentVisible ? '隠す' : '表示する' }}
                     </button>
                 </div>
-                <TournamentBracket v-if="isTournamentVisible" :sport="sportName" />
+                <TournamentBracket v-if="isTournamentVisible" :sport="processedSportName" />
             </section>
         </div>
     </div>
