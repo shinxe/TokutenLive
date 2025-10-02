@@ -55,7 +55,6 @@ const getCellInfo = (rowTeam, colTeam) => {
   if (!match.is_finished) return { type: 'not_finished', match };
 
   const isRowTeamClass1 = match.class1.name === rowTeam;
-  const isWin = match.winner.name === rowTeam;
   let score;
   if (isSetsBased(props.sport)) {
     const score1 = match.class1_sets_won;
@@ -66,6 +65,13 @@ const getCellInfo = (rowTeam, colTeam) => {
     const score2 = match.class2_score;
     score = isRowTeamClass1 ? `${score1} - ${score2}` : `${score2} - ${score1}`;
   }
+
+  // Handle tie
+  if (!match.winner) {
+    return { type: 'finished', match, result: 'tie', symbol: '△', score };
+  }
+
+  const isWin = match.winner.name === rowTeam;
   return { type: 'finished', match, result: isWin ? 'win' : 'loss', symbol: isWin ? '○' : '×', score };
 };
 
@@ -141,6 +147,7 @@ watch(() => [props.sport, props.league], fetchLeagueData);
             <th v-for="team in displayStandings.map(s => s.class_name)" :key="team">{{ team }}</th>
             <th>勝</th>
             <th>敗</th>
+            <th>分</th>
             <th>順位</th>
           </tr>
         </thead>
@@ -170,6 +177,7 @@ watch(() => [props.sport, props.league], fetchLeagueData);
             </td>
             <td class="standings-data">{{displayStandings.find(s => s.class_name === rowTeam)?.wins ?? '-'}}</td>
             <td class="standings-data">{{displayStandings.find(s => s.class_name === rowTeam)?.losses ?? '-'}}</td>
+            <td class="standings-data">{{displayStandings.find(s => s.class_name === rowTeam)?.ties ?? '-'}}</td>
             <td class="standings-data rank">{{displayStandings.find(s => s.class_name === rowTeam)?.rank ?? '-'}}</td>
           </tr>
         </tbody>
@@ -316,6 +324,10 @@ td {
   background-color: rgba(220, 53, 69, 0.15);
 }
 
+.tie {
+  background-color: rgba(108, 117, 125, 0.2);
+}
+
 .win .symbol,
 .loss .symbol {
   font-weight: bold;
@@ -327,6 +339,10 @@ td {
 
 .loss .symbol {
   color: var(--color-loss-symbol);
+}
+
+.tie .symbol {
+  color: var(--color-text);
 }
 
 .self-wrapper {

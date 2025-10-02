@@ -32,12 +32,12 @@ onMounted(() => {
 });
 
 const handleSave = () => {
-  if (score1.value === score2.value) {
-    alert('同点は入力できません。勝敗を決めてください。');
-    return;
+  let winnerId = null;
+  if (score1.value > score2.value) {
+    winnerId = props.match.class1.id;
+  } else if (score2.value > score1.value) {
+    winnerId = props.match.class2.id;
   }
-
-  const winnerId = score1.value > score2.value ? props.match.class1.id : props.match.class2.id;
 
   const matchData = {
     class1_score: isSetsBased ? 0 : score1.value,

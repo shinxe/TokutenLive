@@ -70,6 +70,7 @@ class LeagueStanding(BaseModel):
     class_name: str
     wins: int
     losses: int
+    ties: int
     sets_won_points: int
     league_points: int
 
@@ -119,4 +120,4 @@ class LeagueMatchUpdate(BaseModel):
     class2_score: int
     class1_sets_won: int
     class2_sets_won: int
-    winner_id: int
+    winner_id: Optional[int] = None

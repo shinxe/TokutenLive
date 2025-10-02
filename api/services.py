@@ -10,10 +10,12 @@ def calculate_league_standings(sport: models.SportName, league: models.LeagueNam
         models.LeagueMatch.league == league
     ).all()
 
-    stats = defaultdict(lambda: {"wins": 0, "losses": 0, "sets_won": 0, "class_name": ""})
+    stats = defaultdict(lambda: {"points": 0, "wins": 0, "losses": 0, "ties": 0, "sets_won": 0, "class_name": ""})
     
     all_class_ids = set()
     for match in matches:
+        if not match.class1 or not match.class2:
+            continue
         all_class_ids.add(match.class1_id)
         all_class_ids.add(match.class2_id)
         
@@ -22,31 +24,41 @@ def calculate_league_standings(sport: models.SportName, league: models.LeagueNam
         if not stats[match.class2_id]["class_name"]:
             stats[match.class2_id]["class_name"] = match.class2.name
             
-        if match.is_finished and match.winner_id is not None:
-            winner_id = match.winner_id
-            loser_id = match.class2_id if winner_id == match.class1_id else match.class1_id
-            
-            stats[winner_id]["wins"] += 1
-            stats[loser_id]["losses"] += 1
-            
+        if match.is_finished:
+            score1 = match.class1_score if match.class1_score is not None else 0
+            score2 = match.class2_score if match.class2_score is not None else 0
+
+            if score1 > score2:
+                stats[match.class1_id]["points"] += 2
+                stats[match.class1_id]["wins"] += 1
+                stats[match.class2_id]["losses"] += 1
+            elif score2 > score1:
+                stats[match.class2_id]["points"] += 2
+                stats[match.class2_id]["wins"] += 1
+                stats[match.class1_id]["losses"] += 1
+            else:
+                stats[match.class1_id]["points"] += 1
+                stats[match.class2_id]["points"] += 1
+                stats[match.class1_id]["ties"] += 1
+                stats[match.class2_id]["ties"] += 1
+
             if match.class1_sets_won is not None:
                 stats[match.class1_id]["sets_won"] += match.class1_sets_won
             if match.class2_sets_won is not None:
                 stats[match.class2_id]["sets_won"] += match.class2_sets_won
-        
-    sort_key = lambda class_id: stats[class_id]["wins"]
-        
-    sorted_class_ids = sorted(list(all_class_ids), key=sort_key, reverse=True)
-    
+
+    sorted_class_ids = sorted(list(all_class_ids), key=lambda cid: (stats[cid]["points"], stats[cid]["sets_won"]), reverse=True)
+
+    # Tie-breaking for teams with the same points
     for i in range(len(sorted_class_ids) - 1):
         for j in range(i + 1, len(sorted_class_ids)):
             id1 = sorted_class_ids[i]
             id2 = sorted_class_ids[j]
 
-            if sort_key(id1) == sort_key(id2):
-                for match in matches:
-                    if {match.class1_id, match.class2_id} == {id1, id2}:
-                        if match.winner_id == id2:
+            if stats[id1]["points"] == stats[id2]["points"]:
+                for m in matches:
+                    if m.is_finished and {m.class1_id, m.class2_id} == {id1, id2}:
+                        if m.winner_id == id2:
                             sorted_class_ids[i], sorted_class_ids[j] = sorted_class_ids[j], sorted_class_ids[i]
                         break
 
@@ -54,85 +66,23 @@ def calculate_league_standings(sport: models.SportName, league: models.LeagueNam
     standings = []
     for rank, class_id in enumerate(sorted_class_ids, 1):
         class_stats = stats[class_id]
-        
         assigned_points = league_points_map.get(rank, 0)
             
         standings.append({
             "rank": rank,
             "class_id": class_id,
             "class_name": class_stats["class_name"],
+            "points": class_stats["points"],
             "wins": class_stats["wins"],
             "losses": class_stats["losses"],
+            "ties": class_stats["ties"],
             "sets_won_points": class_stats["sets_won"],
             "league_points": assigned_points
         })
         
     return standings
 
-def generate_tournament_bracket(sport: models.SportName, db: Session):
-    matches = db.query(models.LeagueMatch).filter(
-        models.LeagueMatch.sport == sport,
-        models.LeagueMatch.league == league
-    ).all()
 
-    stats = defaultdict(lambda: {"wins": 0, "losses": 0, "sets_won": 0, "class_name": ""})
-    
-    all_class_ids = set()
-    for match in matches:
-        all_class_ids.add(match.class1_id)
-        all_class_ids.add(match.class2_id)
-        
-        if not stats[match.class1_id]["class_name"]:
-            stats[match.class1_id]["class_name"] = match.class1.name
-        if not stats[match.class2_id]["class_name"]:
-            stats[match.class2_id]["class_name"] = match.class2.name
-            
-        if match.is_finished and match.winner_id is not None:
-            winner_id = match.winner_id
-            loser_id = match.class2_id if winner_id == match.class1_id else match.class1_id
-            
-            stats[winner_id]["wins"] += 1
-            stats[loser_id]["losses"] += 1
-            
-            if match.class1_sets_won is not None:
-                stats[match.class1_id]["sets_won"] += match.class1_sets_won
-            if match.class2_sets_won is not None:
-                stats[match.class2_id]["sets_won"] += match.class2_sets_won
-        
-    sort_key = lambda class_id: stats[class_id]["wins"]
-        
-    sorted_class_ids = sorted(list(all_class_ids), key=sort_key, reverse=True)
-    
-    for i in range(len(sorted_class_ids) - 1):
-        for j in range(i + 1, len(sorted_class_ids)):
-            id1 = sorted_class_ids[i]
-            id2 = sorted_class_ids[j]
-
-            if sort_key(id1) == sort_key(id2):
-                for match in matches:
-                    if {match.class1_id, match.class2_id} == {id1, id2}:
-                        if match.winner_id == id2:
-                            sorted_class_ids[i], sorted_class_ids[j] = sorted_class_ids[j], sorted_class_ids[i]
-                        break
-
-    league_points_map = {1: 12, 2: 10, 3: 8, 4: 6, 5: 4}
-    standings = []
-    for rank, class_id in enumerate(sorted_class_ids, 1):
-        class_stats = stats[class_id]
-        
-        assigned_points = league_points_map.get(rank, 0)
-            
-        standings.append({
-            "rank": rank,
-            "class_id": class_id,
-            "class_name": class_stats["class_name"],
-            "wins": class_stats["wins"],
-            "losses": class_stats["losses"],
-            "sets_won_points": class_stats["sets_won"],
-            "league_points": assigned_points
-        })
-        
-    return standings
 
 def generate_tournament_bracket(sport: models.SportName, db: Session):
     existing_matches = db.query(models.TournamentMatch).filter(models.TournamentMatch.sport == sport).first()
